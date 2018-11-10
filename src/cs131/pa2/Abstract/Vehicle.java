@@ -27,8 +27,7 @@ public abstract class Vehicle implements Runnable {
     private int                	priority;
     private int                	speed;
     private Log 				log;
-    private Tunnel 				currTunnel; 
-
+ 
     /**
      * Initialize a Vehicle; called from Vehicle constructors.
      */
@@ -124,17 +123,7 @@ public abstract class Vehicle implements Runnable {
     public final void addTunnel(Collection<Tunnel> newTunnels) {
         this.tunnels.addAll(newTunnels);
     }
-    
-    public void setCurrTunnel (Tunnel curr){
-    	this.currTunnel = curr; 
-    	
-    }
-    
-    public Tunnel getCurrTunnel(){
-    	return this.currTunnel; 
-    }
-    
-    
+      
     /**
      * Find and cross through one of the tunnels.
      * 
