@@ -1,5 +1,7 @@
 package cs131.pa2.Abstract;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import cs131.pa2.Abstract.Log.EventType;
 import cs131.pa2.Abstract.Log.Log;
@@ -27,8 +29,9 @@ public abstract class Vehicle implements Runnable {
     private int                	priority;
     private int                	speed;
     private Log 				log;
-    private boolean 			ambulancePresent; 
- 
+    private volatile boolean 	ambulancePresent; 
+    private Object 				lock; 
+    
     /**
      * Initialize a Vehicle; called from Vehicle constructors.
      */
@@ -41,6 +44,8 @@ public abstract class Vehicle implements Runnable {
         this.log       = log;
         this.tunnels   = new ArrayList<Tunnel>();
         this.ambulancePresent = false; 
+        this.lock = new Object(); 
+  
 
         if(this.speed < 0 || this.speed > 9) {
             throw new RuntimeException("Vehicle has invalid speed");
@@ -103,13 +108,6 @@ public abstract class Vehicle implements Runnable {
      */
     public int getPriority() {
         return priority;
-    }
-
-    public boolean getAmbulancePresent(){
-    	return this.ambulancePresent; 
-    }
-    public void setAmbulancePresent(boolean value){
-    	this.ambulancePresent = value;
     }
     
     /**
@@ -174,12 +172,71 @@ public abstract class Vehicle implements Runnable {
      * vehicle is, the less time this will take.
      */
     public final void doWhileInTunnel() {
-         try {
+    	boolean readyToAwake = false; 
+    	int totalSleep = (10 - speed) * 100; 
+    	int maxCount = 100; 
+    	int sleepPer = totalSleep/maxCount; 
+    	int count = 0; 
+    	synchronized(lock){
+    		while (readyToAwake == false){
+    			if (this.ambulancePresent == true){
+    				try {
+						lock.wait();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+    			} else {
+    				try {
+						Thread.sleep(sleepPer);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} finally {
+    				if (count >= maxCount){
+    					readyToAwake = true; 
+					}
+    				count++; 
+					}	
+    			}
+    		}
+    	}
+    	
+  
+    }
+    
+    public void setAmbulancePresent (boolean present){
+    	this.ambulancePresent = present; 
+    	synchronized (lock){
+    		lock.notifyAll();
+    	}
+    	
+    }
+    
+    public boolean getAmbulancePresent(){
+    	return this.ambulancePresent; 
+    }
+    
+    /* origional dowhileintunnel 
+     * try {
              Thread.sleep((10 - speed) * 100);
          } catch(InterruptedException e) {
              System.err.println("Interrupted vehicle " + getName());
          }
+     * 
+     */
+    
+    public final void pullover (boolean done){
+    	if (done == false){
+    		
+    		
+    	} else {
+    		
+    		
+    	}
     }
+    
+ 
     
     @Override
     public int hashCode() {

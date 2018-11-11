@@ -9,10 +9,12 @@ import cs131.pa2.Abstract.Vehicle;
 public class BasicTunnel extends Tunnel{
 	public volatile ArrayList<Vehicle> occupantsVehicles; 
 	private static int maxVehicles; 
-	private boolean ambulancePresent; 
+	public boolean ambulancePresent; 
+	private Object lock; 
 	
 	public BasicTunnel(String name) {
 		super(name);
+		lock = new Object(); 
 		this.ambulancePresent = false; 
 		maxVehicles = 3; 
 		occupantsVehicles = new ArrayList<Vehicle>();
@@ -21,14 +23,15 @@ public class BasicTunnel extends Tunnel{
 	@Override
 	public synchronized boolean tryToEnterInner(Vehicle vehicle) {
 		//deal with ambulance 
-		if (vehicle instanceof Ambulance){
+		if (vehicle instanceof Ambulance && ambulancePresent == false){
+			
 			this.setAmbulancePresent(true);
 			for (Vehicle v: occupantsVehicles){
 				v.setAmbulancePresent(true);
+				this.ambulancePresent = true; 
 			}
 			occupantsVehicles.add(vehicle);
 			return true;
-			
 		}	
 		//deal with Sled
 		if (vehicle instanceof Sled){	
@@ -63,9 +66,13 @@ public class BasicTunnel extends Tunnel{
 	public synchronized void exitTunnelInner(Vehicle vehicle) {
 		for (int i = 0; i < occupantsVehicles.size(); i++){
 			if (vehicle instanceof Ambulance){
-				this.setAmbulancePresent(false);
-				for (Vehicle v: occupantsVehicles){
-					v.setAmbulancePresent(false);
+				synchronized(lock){
+					this.setAmbulancePresent(false);
+					for (Vehicle v: occupantsVehicles){
+						v.setAmbulancePresent(false);
+					}
+					this.ambulancePresent = false; 
+					lock.notifyAll(); 
 				}
 			}
 			if (occupantsVehicles.get(i).equals(vehicle)){
