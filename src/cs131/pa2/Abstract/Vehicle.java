@@ -27,6 +27,7 @@ public abstract class Vehicle implements Runnable {
     private int                	priority;
     private int                	speed;
     private Log 				log;
+    private boolean 			ambulancePresent; 
  
     /**
      * Initialize a Vehicle; called from Vehicle constructors.
@@ -39,6 +40,7 @@ public abstract class Vehicle implements Runnable {
         this.speed     = getDefaultSpeed();
         this.log       = log;
         this.tunnels   = new ArrayList<Tunnel>();
+        this.ambulancePresent = false; 
 
         if(this.speed < 0 || this.speed > 9) {
             throw new RuntimeException("Vehicle has invalid speed");
@@ -103,6 +105,13 @@ public abstract class Vehicle implements Runnable {
         return priority;
     }
 
+    public boolean getAmbulancePresent(){
+    	return this.ambulancePresent; 
+    }
+    public void setAmbulancePresent(boolean value){
+    	this.ambulancePresent = value;
+    }
+    
     /**
      * Returns the name of this vehicle
      *
