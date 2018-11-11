@@ -36,6 +36,10 @@ public class PreemptivePriorityScheduler extends Tunnel{
 						hasPriority = false; 
 					}
 				}
+				if (vehicle instanceof Ambulance){
+					hasPriority = true; 
+				}
+				
 				if (hasPriority == false){
 					try {
 						waitingVehicles.wait();
