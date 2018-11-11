@@ -23,7 +23,7 @@ public class BasicTunnel extends Tunnel{
 			if (occupantsVehicles.size() > 0){
 				return false;
 			}
-			occupantsVehicles.add((Sled) vehicle);
+			occupantsVehicles.add(vehicle);
 			return true; 
 		} else {
 			//deal with sleds
