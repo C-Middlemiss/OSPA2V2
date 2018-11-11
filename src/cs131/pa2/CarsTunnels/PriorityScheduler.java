@@ -16,10 +16,6 @@ public class PriorityScheduler extends Tunnel{
 	private volatile ArrayList<Tunnel> basicTunnels; 
 	private volatile ArrayList<Vehicle> waitingVehicles; 
 	private volatile HashMap<Vehicle, Tunnel> inside;
-	//final Lock lock = new ReentrantLock ();
-	//final Condition notPriority = lock.newCondition();
-	//final Condition notFull = lock.newCondition();
-	
 	
 	public PriorityScheduler(String name, Collection<Tunnel> tunnels, Log log) {
 		super(name,log);
@@ -35,9 +31,8 @@ public class PriorityScheduler extends Tunnel{
 	public boolean tryToEnterInner(Vehicle vehicle) {
 		boolean entered = false; 
 		boolean hasPriority = false; 
-		//lock.lock(); 
-		
 		synchronized(waitingVehicles){
+			waitingVehicles.add(vehicle);
 			while (hasPriority == false){
 				hasPriority = true;
 				for (Vehicle v : waitingVehicles){
@@ -55,27 +50,21 @@ public class PriorityScheduler extends Tunnel{
 				}
 			}
 			while (entered == false){
+				for (Tunnel t: basicTunnels){
+					entered = t.tryToEnter(vehicle);
+					if (entered == false){
+						continue; 
+					} else {
+						inside.put(vehicle, t);
+						waitingVehicles.notifyAll();
+						return true; 
+					}
+				}
 				try {
-					for (Tunnel t: basicTunnels){
-						entered = t.tryToEnter(vehicle);
-						if (entered == false){
-							continue; 
-						} else {
-							inside.put(vehicle, t);
-							waitingVehicles.notifyAll();
-							//notPriority.signal();
-							return true; 
-						}
-					}
-					try {
-						waitingVehicles.wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-				} finally {
-					//lock.unlock();
+					waitingVehicles.wait();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 			return false; 
@@ -87,6 +76,12 @@ public class PriorityScheduler extends Tunnel{
 		synchronized(waitingVehicles){			
 			inside.get(vehicle).exitTunnel(vehicle);
 			inside.remove(vehicle);
+			for (int i = 0; i<waitingVehicles.size(); i++){
+				if (waitingVehicles.get(i).equals(vehicle)){
+					waitingVehicles.remove(i);
+				}
+			}
+			
 			waitingVehicles.notifyAll();
 		}
 	}
