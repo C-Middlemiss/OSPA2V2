@@ -52,6 +52,11 @@ public class PreemptivePriorityScheduler extends Tunnel{
 						continue; 
 					} else {
 						inside.put(vehicle, t);
+						for (int i = 0; i<waitingVehicles.size(); i++){
+							if (waitingVehicles.get(i).equals(vehicle)){
+								waitingVehicles.remove(i);
+							}
+						}
 						waitingVehicles.notifyAll();
 						return true; 
 					}
@@ -72,11 +77,7 @@ public class PreemptivePriorityScheduler extends Tunnel{
 		synchronized(waitingVehicles){			
 			inside.get(vehicle).exitTunnel(vehicle);
 			inside.remove(vehicle);
-			for (int i = 0; i<waitingVehicles.size(); i++){
-				if (waitingVehicles.get(i).equals(vehicle)){
-					waitingVehicles.remove(i);
-				}
-			}
+			
 			
 			waitingVehicles.notifyAll();
 		}
