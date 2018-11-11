@@ -20,7 +20,11 @@ public class PriorityScheduler extends Tunnel{
 	public PriorityScheduler(String name, Collection<Tunnel> tunnels, Log log) {
 		super(name,log);
 		basicTunnels = new ArrayList<Tunnel>(); 
+		
+		//arraylist of vehicles waiting
 		waitingVehicles = new ArrayList<Vehicle>(); 
+		
+		//Hashmap of cars inside
 		inside = new HashMap<Vehicle, Tunnel>(); 
 		for (Tunnel t : tunnels){
 			this.basicTunnels.add(t);
@@ -31,17 +35,25 @@ public class PriorityScheduler extends Tunnel{
 	public boolean tryToEnterInner(Vehicle vehicle) {
 		boolean entered = false; 
 		boolean hasPriority = false; 
+		
+		//sync on the ArrayList
 		synchronized(waitingVehicles){
+			
+			//add vehicle to the waiting queue
 			waitingVehicles.add(vehicle);
 			while (hasPriority == false){
 				hasPriority = true;
 				for (Vehicle v : waitingVehicles){
+					
+					//checks if vehicle has priority over the other
 					if (vehicle.getPriority() < v.getPriority()){
 						hasPriority = false; 
 					}
 				}
 				if (hasPriority == false){
 					try {
+						
+						//wait until notified
 						waitingVehicles.wait();
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
@@ -55,12 +67,16 @@ public class PriorityScheduler extends Tunnel{
 					if (entered == false){
 						continue; 
 					} else {
+						
+						//put vehicle inside tunnel
 						inside.put(vehicle, t);
 						for (int i = 0; i<waitingVehicles.size(); i++){
 							if (waitingVehicles.get(i).equals(vehicle)){
 								waitingVehicles.remove(i);
 							}
 						}
+						
+						//wake up all threads
 						waitingVehicles.notifyAll();
 						return true; 
 					}
@@ -78,11 +94,13 @@ public class PriorityScheduler extends Tunnel{
 
 	@Override
 	public void exitTunnelInner(Vehicle vehicle) {
+		
+		//sync on the ArrayList
 		synchronized(waitingVehicles){			
 			inside.get(vehicle).exitTunnel(vehicle);
 			inside.remove(vehicle);
 			
-			
+			//wake up all threads
 			waitingVehicles.notifyAll();
 		}
 	}
